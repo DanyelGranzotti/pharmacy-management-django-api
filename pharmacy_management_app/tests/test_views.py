@@ -7,12 +7,13 @@ from pharmacy_management_app.models.bank_account import BankAccount
 
 User = get_user_model()
 
-class UserViewSetTest(APITestCase):
+class BaseTestCase(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(email='testuser@example.com', password='password123', name='Test User')
         self.token = RefreshToken.for_user(self.user).access_token
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.token}')
 
+class UserViewSetTest(BaseTestCase):
     def test_create_user(self):
         url = reverse('user-list')
         data = {'email': 'newuser@example.com', 'name': 'New User', 'password': 'password123'}
@@ -24,11 +25,9 @@ class UserViewSetTest(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-class BankAccountViewSetTest(APITestCase):
+class BankAccountViewSetTest(BaseTestCase):
     def setUp(self):
-        self.user = User.objects.create_user(email='testuser@example.com', password='password123', name='Test User')
-        self.token = RefreshToken.for_user(self.user).access_token
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.token}')
+        super().setUp()
         self.bank_account = BankAccount.objects.create(
             user=self.user,
             account_number='1234567890',
@@ -53,6 +52,5 @@ class BankAccountViewSetTest(APITestCase):
 
     def test_retrieve_bank_account(self):
         url = reverse('bankaccount-detail', args=[self.bank_account.id])
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.token}')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)

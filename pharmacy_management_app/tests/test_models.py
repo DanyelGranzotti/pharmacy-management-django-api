@@ -4,18 +4,19 @@ from pharmacy_management_app.models.bank_account import BankAccount
 
 User = get_user_model()
 
-class UserModelTest(TestCase):
+class BaseTestCase(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(email='testuser@example.com', password='password123', name='Test User')
 
+class UserModelTest(BaseTestCase):
     def test_user_creation(self):
         self.assertEqual(self.user.email, 'testuser@example.com')
         self.assertTrue(self.user.check_password('password123'))
         self.assertEqual(self.user.name, 'Test User')
 
-class BankAccountModelTest(TestCase):
+class BankAccountModelTest(BaseTestCase):
     def setUp(self):
-        self.user = User.objects.create_user(email='testuser@example.com', password='password123', name='Test User')
+        super().setUp()
         self.bank_account = BankAccount.objects.create(
             user=self.user,
             account_number='1234567890',

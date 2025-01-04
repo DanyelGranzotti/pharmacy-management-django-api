@@ -6,10 +6,11 @@ from pharmacy_management_app.models.bank_account import BankAccount
 
 User = get_user_model()
 
-class UserSerializerTest(TestCase):
+class BaseTestCase(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(email='testuser@example.com', password='password123', name='Test User')
 
+class UserSerializerTest(BaseTestCase):
     def test_user_serializer(self):
         serializer = UserSerializer(self.user)
         data = serializer.data
@@ -25,9 +26,9 @@ class RegisterSerializerTest(TestCase):
         self.assertEqual(user.email, 'newuser@example.com')
         self.assertTrue(user.check_password('Str0ngP@ssw0rd!'))
 
-class BankAccountSerializerTest(TestCase):
+class BankAccountSerializerTest(BaseTestCase):
     def setUp(self):
-        self.user = User.objects.create_user(email='testuser@example.com', password='password123', name='Test User')
+        super().setUp()
         self.bank_account = BankAccount.objects.create(
             user=self.user,
             account_number='1234567890',
