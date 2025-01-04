@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'pharmacy_management_app.apps.PharmacyManagementAppConfig',
+    'pharmacy_management_django_api.apps.PharmacyManagementDjangoApiConfig',
     'drf_yasg',
     'rest_framework',
     'rest_framework_simplejwt',
@@ -155,5 +156,11 @@ SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': False,
     'JSON_EDITOR': True,
 }
+
+ADMIN_EMAIL = env('ADMIN_EMAIL', default='admin@example.com')
+ADMIN_PASSWORD = env('ADMIN_PASSWORD', default='adminpassword')
+
+
+
 
 

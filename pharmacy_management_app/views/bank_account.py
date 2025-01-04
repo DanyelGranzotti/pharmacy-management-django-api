@@ -10,7 +10,11 @@ class BankAccountViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsOwner]
 
     def get_queryset(self):
-        return self.queryset.filter(user=self.request.user)
+        if getattr(self, 'swagger_fake_view', False):
+            return BankAccount.objects.none()
+        if self.request.user.is_authenticated:
+            return self.queryset.filter(user=self.request.user)
+        return BankAccount.objects.none()
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
