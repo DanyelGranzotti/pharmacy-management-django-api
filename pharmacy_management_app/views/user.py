@@ -10,10 +10,19 @@ from django.core.exceptions import ObjectDoesNotExist
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import IsAuthenticated
+from ..permissions import IsOwner
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update', 'destroy']:
+            self.permission_classes = [IsAuthenticated, IsOwner]
+        else:
+            self.permission_classes = [IsAuthenticated]
+        return super().get_permissions()
 
     @swagger_auto_schema(
         operation_description="Create a new user",
@@ -45,7 +54,7 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def retrieve(self, request, *args, **kwargs):
         try:
-            user = get_user(kwargs['pk'])
+            user = self.get_object()
             serializer = self.get_serializer(user)
             return Response(serializer.data)
         except ObjectDoesNotExist as e:
@@ -65,9 +74,12 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def update(self, request, *args, **kwargs):
         try:
-            user = update_user(kwargs['pk'], request.data)
-            serializer = self.get_serializer(user)
-            return Response(serializer.data)
+            user = self.get_object()
+            serializer = self.get_serializer(user, data=request.data, partial=False)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except ObjectDoesNotExist as e:
             return Response({'detail': str(e)}, status=status.HTTP_404_NOT_FOUND)
         except IntegrityError as e:
@@ -86,7 +98,19 @@ class UserViewSet(viewsets.ModelViewSet):
         }
     )
     def partial_update(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
+        try:
+            user = self.get_object()
+            serializer = self.get_serializer(user, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except ObjectDoesNotExist as e:
+            return Response({'detail': str(e)}, status=status.HTTP_404_NOT_FOUND)
+        except IntegrityError as e:
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            return Response({'detail': 'Unexpected error.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @swagger_auto_schema(
         operation_description="Delete a user by ID",
@@ -98,7 +122,8 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def destroy(self, request, *args, **kwargs):
         try:
-            delete_user(kwargs['pk'])
+            user = self.get_object()
+            user.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         except ObjectDoesNotExist as e:
             return Response({'detail': str(e)}, status=status.HTTP_404_NOT_FOUND)
