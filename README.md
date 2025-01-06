@@ -1,4 +1,3 @@
-
 # Pharmacy Management Django API
 
 Este projeto é uma API de gerenciamento de farmácia construída com Django e PostgreSQL, usando Docker para facilitar a configuração.
@@ -38,4 +37,17 @@ Cada classe tem responsabilidade única (SRP) e as dependências são injetadas 
 Para parar, use:
 ```bash
 docker-compose down
+```
+
+## Upload de Produtos via CSV
+Esta API permite o upload de produtos através de um arquivo CSV. Para isso, utilize o endpoint `/upload-csv/` com um método POST, enviando o arquivo CSV no corpo da requisição.
+
+### Exemplo de CSV
+```csv
+name,description,price,quantity
+Aspirin,Pain reliever,5.99,100
+Ibuprofen,Anti-inflammatory,7.49,200
+Paracetamol,Fever reducer,4.99,150
+Cough Syrup,Cough suppressant,8.99,50
+Vitamin C,Immune booster,12.99,75
 ```
