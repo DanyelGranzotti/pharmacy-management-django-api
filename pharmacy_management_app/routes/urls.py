@@ -2,13 +2,14 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from ..views.user import UserViewSet, RegisterView, LoginView
 from ..views.bank_account import BankAccountViewSet
-from ..views.product import ProductCSVUploadView
+from ..views.product import ProductCSVUploadView, ProductViewSet
 from rest_framework_simplejwt.views import TokenRefreshView
 from ..views.transaction import PurchaseProductView
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'bank-accounts', BankAccountViewSet)
+router.register(r'products', ProductViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
