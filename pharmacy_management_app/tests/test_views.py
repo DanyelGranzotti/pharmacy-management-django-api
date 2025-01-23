@@ -4,6 +4,7 @@ from rest_framework.test import APITestCase
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 from pharmacy_management_app.models.bank_account import BankAccount
+from pharmacy_management_app.models.suppliers import Suppliers
 
 User = get_user_model()
 
@@ -28,6 +29,7 @@ class UserViewSetTest(BaseTestCase):
 class BankAccountViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
+        self.supplier = Suppliers.objects.create(name='Test Supplier', contact_info='test@example.com')
         self.bank_account = BankAccount.objects.create(
             user=self.user,
             account_number='1234567890',

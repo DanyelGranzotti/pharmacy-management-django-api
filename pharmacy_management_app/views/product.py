@@ -10,7 +10,6 @@ from drf_yasg import openapi
 from ..models.product import Product
 from ..serializers.product import ProductSerializer
 from ..permissions import IsAdminUser
-from ..services.product_service import process_csv
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from ..models.suppliers import Suppliers
@@ -21,37 +20,6 @@ class ProductPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 100
 
-class ProductCSVUploadView(APIView):
-    parser_classes = [MultiPartParser, FormParser]
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    @swagger_auto_schema(
-        operation_description="Upload a CSV file with a list of products",
-        manual_parameters=[
-            openapi.Parameter(
-                'file', openapi.IN_FORM, description="CSV file", type=openapi.TYPE_FILE, required=True
-            )
-        ],
-        responses={
-            201: openapi.Response('Products uploaded successfully'),
-            400: 'Bad Request',
-            500: 'Internal Server Error'
-        }
-    )
-    def post(self, request, *args, **kwargs):
-        file = request.FILES.get('file')
-        if not file:
-            return Response({'detail': 'No file provided.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            products = process_csv(file)
-            return Response({'detail': 'Products uploaded successfully.'}, status=status.HTTP_201_CREATED)
-        except ValueError as e:
-            logger.error(f"Invalid data: {e}")
-            return Response({'detail': f"Invalid data: {e}"}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            logger.error(f"Error processing file: {e}")
-            return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
