@@ -5,11 +5,13 @@ from ..views.bank_account import BankAccountViewSet
 from ..views.product import ProductCSVUploadView, ProductViewSet
 from rest_framework_simplejwt.views import TokenRefreshView
 from ..views.transaction import PurchaseProductView
+from ..views.supplier import SupplierViewSet
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'bank-accounts', BankAccountViewSet)
 router.register(r'products', ProductViewSet)
+router.register(r'suppliers', SupplierViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

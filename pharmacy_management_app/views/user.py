@@ -12,10 +12,20 @@ from drf_yasg import openapi
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 from ..permissions import IsOwner
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.pagination import PageNumberPagination
+
+class UserPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['name', 'email']
+    pagination_class = UserPagination
 
     def get_permissions(self):
         if self.action in ['update', 'partial_update', 'destroy']:
@@ -129,6 +139,13 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response({'detail': str(e)}, status=status.HTTP_404_NOT_FOUND)
         except Exception:
             return Response({'detail': 'Unexpected error.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @swagger_auto_schema(
+        operation_description="Retrieve a list of users",
+        responses={200: UserSerializer(many=True)}
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
 class RegisterView(APIView):
     @swagger_auto_schema(

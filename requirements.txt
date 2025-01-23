@@ -1,6 +1,8 @@
-Django==3.2.25
+django
 psycopg2-binary
 SQLAlchemy
 drf-yasg
 django-environ
 djangorestframework-simplejwt
+django-rest-framework
+django-filter

@@ -7,6 +7,7 @@ from ..models.product import Product
 from ..models.bank_account import BankAccount
 from ..models.user import User
 from ..serializers.transaction import PurchaseSerializer
+from ..services.purchase_service import post_purchase
 
 class PurchaseProductView(APIView):
     permission_classes = [IsAuthenticated]
@@ -28,19 +29,11 @@ class PurchaseProductView(APIView):
             quantity = serializer.validated_data['quantity']
             user = request.user
 
-            try:
-                product = Product.objects.get(id=product_id)
-                total_cost = product.price * quantity
-
-                bank_account = BankAccount.objects.get(user=user)
-                if bank_account.balance >= total_cost:
-                    bank_account.balance -= total_cost
-                    bank_account.save()
-
-                    user.purchased_products.add(product, through_defaults={'quantity': quantity})
-                    return Response({'detail': 'Purchase successful'}, status=status.HTTP_200_OK)
-                else:
-                    return Response({'detail': 'Insufficient balance'}, status=status.HTTP_400_BAD_REQUEST)
+            try: 
+                post_purchase(product_id=product_id, quantity=quantity, user=user)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            except User.DoesNotExist:
+                return Response({'detail': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
             except Product.DoesNotExist:
                 return Response({'detail': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
             except BankAccount.DoesNotExist:

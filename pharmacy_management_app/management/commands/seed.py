@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from pharmacy_management_app.models.bank_account import BankAccount
 from pharmacy_management_app.models.product import Product
+from pharmacy_management_app.models.suppliers import Suppliers
 
 User = get_user_model()
 
@@ -12,6 +13,7 @@ class Command(BaseCommand):
         self.stdout.write('Seeding data...')
         self.create_users()
         self.create_bank_accounts()
+        self.create_suppliers()
         self.create_products()
         self.stdout.write('Data seeded successfully.')
 
@@ -43,11 +45,28 @@ class Command(BaseCommand):
             else:
                 self.stdout.write(f'Bank account already exists for user: {account_data["user"].email}')
 
+    def create_suppliers(self):
+        suppliers_data = [
+            {'name': 'Supplier 1', 'contact_info': 'Contact info for supplier 1'},
+            {'name': 'Supplier 2', 'contact_info': 'Contact info for supplier 2'},
+            {'name': 'Supplier 3', 'contact_info': 'Contact info for supplier 3'},
+        ]
+        for supplier_data in suppliers_data:
+            supplier, created = Suppliers.objects.get_or_create(name=supplier_data['name'], defaults=supplier_data)
+            if created:
+                self.stdout.write(f'Created supplier: {supplier.name}')
+            else:
+                self.stdout.write(f'Supplier already exists: {supplier.name}')
+
     def create_products(self):
+        supplier1 = Suppliers.objects.get(name='Supplier 1')
+        supplier2 = Suppliers.objects.get(name='Supplier 2')
+        supplier3 = Suppliers.objects.get(name='Supplier 3')
+
         products_data = [
-            {'name': 'Product 1', 'description': 'Description for product 1', 'cost_price': 5.00, 'profit_margin': 0.5, 'quantity': 100},
-            {'name': 'Product 2', 'description': 'Description for product 2', 'cost_price': 10.00, 'profit_margin': 0.6, 'quantity': 200},
-            {'name': 'Product 3', 'description': 'Description for product 3', 'cost_price': 15.00, 'profit_margin': 0.7, 'quantity': 300},
+            {'name': 'Product 1', 'description': 'Description for product 1', 'cost_price': 5.00, 'profit_margin': 0.5, 'quantity': 100, 'supplier': supplier1},
+            {'name': 'Product 2', 'description': 'Description for product 2', 'cost_price': 10.00, 'profit_margin': 0.6, 'quantity': 200, 'supplier': supplier2},
+            {'name': 'Product 3', 'description': 'Description for product 3', 'cost_price': 15.00, 'profit_margin': 0.7, 'quantity': 300, 'supplier': supplier3},
         ]
         for product_data in products_data:
             product, created = Product.objects.get_or_create(name=product_data['name'], defaults=product_data)

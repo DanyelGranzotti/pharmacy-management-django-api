@@ -10,8 +10,16 @@ from drf_yasg import openapi
 from ..models.product import Product
 from ..serializers.product import ProductSerializer
 from ..permissions import IsAdminUser
-
+from ..services.product_service import process_csv
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.pagination import PageNumberPagination
+from ..models.suppliers import Suppliers
 logger = logging.getLogger(__name__)
+
+class ProductPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
 class ProductCSVUploadView(APIView):
     parser_classes = [MultiPartParser, FormParser]
@@ -36,27 +44,11 @@ class ProductCSVUploadView(APIView):
             return Response({'detail': 'No file provided.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            decoded_file = file.read().decode('utf-8').splitlines()
-            reader = csv.DictReader(decoded_file)
-            products = []
-            for row in reader:
-                logger.debug(f"Processing row: {row}")
-                try:
-                    if 'cost_price' in row:
-                        row['cost_price'] = float(row['cost_price'])
-                    if 'profit_margin' in row:
-                        row['profit_margin'] = float(row['profit_margin'])
-                except ValueError as e:
-                    logger.error(f"Invalid data: {e}")
-                    return Response({'detail': f"Invalid data: {e}"}, status=status.HTTP_400_BAD_REQUEST)
-                
-                serializer = ProductSerializer(data=row)
-                if serializer.is_valid():
-                    products.append(serializer.save())
-                else:
-                    logger.error(f"Invalid data: {serializer.errors}")
-                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            products = process_csv(file)
             return Response({'detail': 'Products uploaded successfully.'}, status=status.HTTP_201_CREATED)
+        except ValueError as e:
+            logger.error(f"Invalid data: {e}")
+            return Response({'detail': f"Invalid data: {e}"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.error(f"Error processing file: {e}")
             return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -64,6 +56,9 @@ class ProductCSVUploadView(APIView):
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['name']
+    pagination_class = ProductPagination
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
@@ -85,6 +80,12 @@ class ProductViewSet(viewsets.ModelViewSet):
         responses={201: ProductSerializer}
     )
     def create(self, request, *args, **kwargs):
+        supplier_id = request.data.get('supplier')
+        try:
+            supplier = Suppliers.objects.get(id=supplier_id)
+        except Suppliers.DoesNotExist:
+            return Response({'detail': 'Supplier not found.'}, status=status.HTTP_400_BAD_REQUEST)
+        request.data['supplier'] = supplier.id
         return super().create(request, *args, **kwargs)
 
     @swagger_auto_schema(
